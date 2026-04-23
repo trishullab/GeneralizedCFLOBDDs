@@ -184,7 +184,9 @@ void PairProductMapHandle::AddToEnd(const intpair& p)
 void PairProductMapHandle::Extend(const PairProductMapHandle& other)
 {
     for (unsigned int i = 0; i < other.Size(); i++) {
-        mapContents->mapArray.push_back(other.mapContents->mapArray[i]);
+      if (!Member(other.mapContents->mapArray[i])) {
+        AddToEnd(other.mapContents->mapArray[i]);
+      }
     }
 }
 
@@ -304,7 +306,8 @@ G_CFLOBDDNodeHandle PairProduct(G_CFLOBDDInternalNode* n1,
       for (unsigned int layer = 1; layer < n->numLayers; layer++) {
         // iterate over LayerMapHandle to get the pairs of BConnections
         std::vector<intpair> newLayerMapHandlePairs;
-        std::vector<int> tempVector (n1->numExits * n2->numExits, -1);
+        std::unordered_map<intpair, int, intpair::intpair_hash, intpair::intpair_equal> tempMap;
+        // std::vector<int> tempVector (n1->numExits * n2->numExits, -1);
         n->connections[layer].Reserve(layerMapHandlePairs.size());
         
         for (auto& it : layerMapHandlePairs) {
@@ -324,17 +327,22 @@ G_CFLOBDDNodeHandle PairProduct(G_CFLOBDDInternalNode* n1,
               auto second = tempMapHandle[k].Second();
               auto adjusted_first = n1_connection.returnMapHandle.Lookup(first);
               auto adjusted_second = n2_connection.returnMapHandle.Lookup(second);
-              auto index = adjusted_first * n2->numExits + adjusted_second;
-              if (tempVector[index] == -1) {
+              // auto index = adjusted_first * n2->numExits + adjusted_second;
+              auto pair_index = intpair(adjusted_first, adjusted_second);
+              auto search = tempMap.find(pair_index);
+              // if (tempVector[index] == -1) {
+              if (search == tempMap.end()) {
                 // Not found
                 auto pair_index = intpair(adjusted_first, adjusted_second);
                 newLayerMapHandlePairs.push_back(pair_index);
                 n_returnHandle.AddToEnd(newLayerMapHandlePairs.size() - 1);
-                tempVector[index] = newLayerMapHandlePairs.size() - 1;
+                tempMap[pair_index] = newLayerMapHandlePairs.size() - 1;
+                // tempVector[index] = newLayerMapHandlePairs.size() - 1;
               }
               else {
                 // Found
-                n_returnHandle.AddToEnd(tempVector[index]);
+                // n_returnHandle.AddToEnd(tempVector[index]);
+                n_returnHandle.AddToEnd(search->second);
               }
           }
           

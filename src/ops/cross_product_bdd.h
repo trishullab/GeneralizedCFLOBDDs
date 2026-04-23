@@ -12,13 +12,13 @@ namespace G_CFL_OBDD {
 BDDNodeHandle PairProduct(BDDNodeHandle n1,
                           BDDNodeHandle n2,
                           PairProductMapHandle &pairProductMapHandle,
-                          std::unordered_map<PairProductKey<BDDNodeHandle>, BDDNodeHandle, PairProductKey<BDDNodeHandle>::PairProductKey_Hash, PairProductKey<BDDNodeHandle>::PairProductKey_Equal> &pairProductCache
+                          std::unordered_map<intpair, unsigned int, intpair::intpair_hash, intpair::intpair_equal> &pairProductMap
                         );
 
 BDDNodeHandle PairProductBDDInternal(BDDInternalNode *n1,
                           BDDInternalNode *n2,
                           PairProductMapHandle &pairProductMapHandle,
-                          std::unordered_map<PairProductKey<BDDNodeHandle>, BDDNodeHandle, PairProductKey<BDDNodeHandle>::PairProductKey_Hash, PairProductKey<BDDNodeHandle>::PairProductKey_Equal> &pairProductCache
+                          std::unordered_map<intpair, unsigned int, intpair::intpair_hash, intpair::intpair_equal> &pairProductMap
                         );
 
 G_CFLOBDDNodeHandle PairProduct(G_CFLOBDDBDDNode* n1,

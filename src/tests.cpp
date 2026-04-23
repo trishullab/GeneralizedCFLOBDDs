@@ -442,9 +442,9 @@ void Tests::testSynFun4() {
 
     std::vector<std::string> productions = {
         // "S 18 -> S 17 S 17 S 17", // 10077696
-        "S 17 -> S 16 S 16", // 3359232
-        "S 16 -> S 15 S 15 S 15", // 1679616
-        "S 15 -> S 14 S 14", // 559872
+        // "S 17 -> S 16 S 16", // 3359232
+        // "S 16 -> S 15 S 15 S 15", // 1679616
+        // "S 15 -> S 14 S 14", // 559872
         "S 14 -> S 13 S 13 S 13", // 279936
         "S 13 -> S 12 S 12", // 93312
         "S 12 -> S 11 S 11 S 11", // 46656
@@ -463,12 +463,12 @@ void Tests::testSynFun4() {
     };
 
     std::shared_ptr<Grammar> grammar = std::make_shared<Grammar>();
-    grammar->constructGrammar(productions, "S 17");
+    grammar->constructGrammar(productions, "S 14");
     grammar->InstallNumVars();
     grammar->updateLevel();
 
 	auto start = high_resolution_clock::now();
-	unsigned int numVars = 3359232; // 6765
+	unsigned int numVars = 279936; // 6765
 	unsigned int level = grammar->root->level;
 	std::vector<G_CFLOBDD> vars;
 	for (unsigned int i = 0; i < numVars; i++) {
@@ -1534,7 +1534,7 @@ void Tests::testNQueens(unsigned int n, unsigned int grammarChoice) {
 
 void Tests::testBDDGrammar() {
     std::vector<std::string> productions = {
-        "S 0 -> BDD(5)"
+        "S 0 -> BDD(5)",
     };
 
     std::shared_ptr<Grammar> grammar = std::make_shared<Grammar>();
@@ -1542,21 +1542,18 @@ void Tests::testBDDGrammar() {
     grammar->InstallNumVars();
     grammar->updateLevel(); 
 
-    G_CFLOBDD gat1 = MkProjection(0, grammar->root->level, grammar);
-    G_CFLOBDD gat2 = MkProjection(1, grammar->root->level, grammar);
-    G_CFLOBDD gat3 = MkProjection(2, grammar->root->level, grammar);
-    G_CFLOBDD gat6 = MkProjection(3, grammar->root->level, grammar);
-    G_CFLOBDD gat7 = MkProjection(4, grammar->root->level, grammar);
-    G_CFLOBDD gat10 = MkNand(gat1, gat3);
-    G_CFLOBDD gat11 = MkNand(gat3, gat6);
-    gat11.PrintYield();
-    // G_CFLOBDD gat16 = MkNand(gat2, gat11);
-    // G_CFLOBDD gat19 = MkNand(gat11, gat7);
-    // G_CFLOBDD gat22 = MkNand(gat10, gat16);
-    // G_CFLOBDD gat23 = MkNand(gat16, gat19);
+    G_CFLOBDD x0 = MkProjection(0, grammar->root->level, grammar);
+    G_CFLOBDD x1 = MkProjection(1, grammar->root->level, grammar);
+    G_CFLOBDD x2 = MkProjection(2, grammar->root->level, grammar);
+    G_CFLOBDD x3 = MkProjection(3, grammar->root->level, grammar);
+    G_CFLOBDD x4 = MkProjection(4, grammar->root->level, grammar);
 
-    // gat22.PrintYield();
-    // gat23.PrintYield();
+    // complicated function
+    G_CFLOBDD and_x0_x1 = MkAnd(x0, x1);
+    G_CFLOBDD or_x3_x4 = MkOr(x3, x4);
+    G_CFLOBDD and_x2_or_x3_x4 = MkAnd(x2, or_x3_x4);
+    G_CFLOBDD F = MkNor(and_x0_x1, and_x2_or_x3_x4);
+    F.PrintYield(std::cout);
 }
 
 void RunInit() {
