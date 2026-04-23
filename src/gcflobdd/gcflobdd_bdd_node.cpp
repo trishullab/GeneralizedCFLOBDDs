@@ -276,9 +276,9 @@ BDDNodeHandle BDDNodeHandle::Reduce(ReductionMapHandle& redMapHandle, unsigned i
 	// 	return MkNoDistinction_BDD(handleContents->NumVars());
 	// }
 
-	if (redMapHandle.mapContents->isIdentityMap && !forceReduce) {
-		return *this;
-	}
+	// if (redMapHandle.mapContents->isIdentityMap && !forceReduce) {
+	// 	return *this;
+	// }
 
 	BDDNodeHandle cachedNodeHandle;
 	bool isCached = reduceCache->Fetch(BDDReduceKey(*this, redMapHandle), cachedNodeHandle);
@@ -384,17 +384,40 @@ bool BDDInternalNode::operator== (const BDDNode & n) const
   return true;
 }
 
+ G_CFLOBDDReturnMapHandle GetInducedReductionMapHandle(ReductionMapHandle& redMapHandle, G_CFLOBDDReturnMapHandle& returnMapHandle, ReductionMapHandle& inducedRedMapHandle) {
+  G_CFLOBDDReturnMapHandle newReturnMapHandle;
+  std::unordered_map<int, int> returnValToIndex;
+    for (unsigned int i = 0; i < returnMapHandle.Size(); i++) {
+        unsigned int returnVal = returnMapHandle.Lookup(i);
+        unsigned int redReturnVal = redMapHandle.Lookup(returnVal);
+        if (returnValToIndex.find(redReturnVal) == returnValToIndex.end()) {
+            returnValToIndex.emplace(redReturnVal, newReturnMapHandle.Size());
+            inducedRedMapHandle.AddToEnd(redReturnVal);
+            newReturnMapHandle.AddToEnd(redReturnVal);
+        }
+        else {
+            inducedRedMapHandle.AddToEnd(redReturnVal);
+        }
+    }
+    inducedRedMapHandle.Canonicalize();
+    newReturnMapHandle.Canonicalize();
+    return newReturnMapHandle;
+}
+
 // Reduce
 BDDNodeHandle BDDInternalNode::Reduce(ReductionMapHandle& redMapHandle, unsigned int replacementNumExits, bool forceReduce)
 {
-  auto reducedThenBranch = thenBranch.Reduce(redMapHandle, replacementNumExits, forceReduce);
-  auto reducedElseBranch = elseBranch.Reduce(redMapHandle, replacementNumExits, forceReduce);
+  ReductionMapHandle thenBranchRedMapHandle, elseBranchRedMapHandle;
+  G_CFLOBDDReturnMapHandle newThenReturnMapHandle = GetInducedReductionMapHandle(redMapHandle, thenBranch.returnMapHandle, thenBranchRedMapHandle);
+  G_CFLOBDDReturnMapHandle newElseReturnMapHandle = GetInducedReductionMapHandle(redMapHandle, elseBranch.returnMapHandle, elseBranchRedMapHandle);
+  auto reducedThenBranch = thenBranch.entryPointHandle->Reduce(redMapHandle, replacementNumExits, forceReduce);
+  auto reducedElseBranch = elseBranch.entryPointHandle->Reduce(redMapHandle, replacementNumExits, forceReduce);
   if (reducedThenBranch == reducedElseBranch) {
       return reducedThenBranch;
   }
   BDDInternalNode* reducedNode = new BDDInternalNode(numVars, varID);
-  reducedNode->thenBranch = reducedThenBranch;
-  reducedNode->elseBranch = reducedElseBranch;
+  reducedNode->thenBranch = Section(reducedThenBranch, newThenReturnMapHandle);
+  reducedNode->elseBranch = Section(reducedElseBranch, newElseReturnMapHandle);
   BDDNodeHandle reducedNodeHandle(reducedNode);
   return reducedNodeHandle;
 }
@@ -408,8 +431,8 @@ std::ostream& BDDInternalNode::print(std::ostream & out) const
 
 void BDDInternalNode::PrintYield(std::unordered_map<int, std::vector<std::string>>& yield_strings) const {
   std::unordered_map<int, std::vector<std::string>> thenYield, elseYield;
-  thenBranch.handleContents->PrintYield(thenYield);
-  elseBranch.handleContents->PrintYield(elseYield);
+  thenBranch.entryPointHandle->handleContents->PrintYield(thenYield);
+  elseBranch.entryPointHandle->handleContents->PrintYield(elseYield);
   // size of a yeild string
   unsigned int then_yield_size = thenYield.empty() ? 0 : (thenYield.begin()->second.empty() ? 0 : thenYield.begin()->second[0].size());
   unsigned int else_yield_size = elseYield.empty() ? 0 : (elseYield.begin()->second.empty() ? 0 : elseYield.begin()->second[0].size());
@@ -485,8 +508,8 @@ bool BDDLeafNode::operator== (const BDDNode & n) const
 
 BDDNodeHandle BDDLeafNode::Reduce(ReductionMapHandle& redMapHandle, unsigned int replacementNumExits, bool forceReduce)
 {
-  std::cout << "Reducing leaf node with value " << value << std::endl;
-  std::cout << "Using reduction map: " << redMapHandle << std::endl;
+  // std::cout << "Reducing leaf node with value " << value << std::endl;
+  // std::cout << "Using reduction map: " << redMapHandle << std::endl;
   if (redMapHandle.Lookup(value) == value) {
       return BDDNodeHandle(this);
   } else {

@@ -125,8 +125,8 @@ class BDDInternalNode : public BDDNode {
     std::ostream& print(std::ostream & out = std::cout) const;
     void PrintYield(std::unordered_map<int, std::vector<std::string>>& yield_strings) const;
     BDDNodeHandle Reduce(ReductionMapHandle& redMapHandle, unsigned int replacementNumExits, bool forceReduce = false);
-  BDDNodeHandle thenBranch;
-  BDDNodeHandle elseBranch;
+  Section thenBranch;
+  Section elseBranch;
 
  private:
   BDDInternalNode(const BDDInternalNode &n);   // Copy constructor (hidden)

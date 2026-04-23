@@ -247,9 +247,9 @@ static Hashtable<CFLReduceKey, G_CFLOBDDNodeHandle> *reduceCache = NULL;
 
 G_CFLOBDDNodeHandle G_CFLOBDDNodeHandle::Reduce(ReductionMapHandle& redMapHandle, unsigned int replacementNumExits, bool forceReduce)
 {
-	if (replacementNumExits == 1 && !forceReduce) {
-		return MkNoDistinction(handleContents->level, handleContents->grammar);
-	}
+	// if (replacementNumExits == 1 && !forceReduce) {
+	// 	return MkNoDistinction(handleContents->level, handleContents->grammar);
+	// }
 
 	if (redMapHandle.mapContents->isIdentityMap && !forceReduce) {
 		return *this;
@@ -607,11 +607,29 @@ void G_CFLOBDDInternalNode::CountPaths(Hashset<G_CFLOBDDNodeHandle> *visitedNode
 void G_CFLOBDDInternalNode::PrintYield(std::unordered_map<int, std::vector<std::string>>& yield_strings) const
 {
   for (unsigned int layer = 0; layer < numLayers; layer++) {
+    std::unordered_map<int, std::vector<std::string>> new_yield_strings;
     for (unsigned int i = 0; i < connections[layer].Size(); i++)
     {
         Connection& conn = connections[layer][i];
-        conn.entryPointHandle->handleContents->PrintYield(yield_strings);
+        std::unordered_map<int, std::vector<std::string>> yield_strings_for_layer; 
+        conn.entryPointHandle->handleContents->PrintYield(yield_strings_for_layer);
+        if (i == 0) {
+          new_yield_strings = yield_strings_for_layer;
+        }
+        else {
+          for (const auto& pair : yield_strings_for_layer) {
+            int exitIndexInChild = pair.first;
+            const std::vector<std::string>& yield_strings_for_child_exit = pair.second;
+            int exitIndexInCurrentNode = conn.returnMapHandle[exitIndexInChild];
+            for (const std::string& yield_string : yield_strings_for_child_exit) {
+              for (const std::string& existing_yield_string : yield_strings[i]) {
+                new_yield_strings[exitIndexInCurrentNode].push_back(existing_yield_string + yield_string);
+              }
+            }
+          }
+        }
     }
+    yield_strings = new_yield_strings;
   }
 }
 
@@ -699,7 +717,9 @@ G_CFLOBDDNodeHandle G_CFLOBDDForkNode::Reduce(ReductionMapHandle&, unsigned int 
 		}
 	}
 	else{
-		assert(replacementNumExits == 2);
+		if (replacementNumExits == 1) {
+      return G_CFLOBDDNodeHandle::G_CFLOBDDDontCareNodeHandle;
+    }
 		return G_CFLOBDDNodeHandle::G_CFLOBDDForkNodeHandle;
 	}
 }

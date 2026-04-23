@@ -9,12 +9,12 @@ OBJ_DIR = obj
 COMMANDLINE_OPTIONS = #/dev/ttyS0
 
 # Compiler options during compilation
-COMPILE_OPTIONS = -g -O3 -std=c++2a -w
+COMPILE_OPTIONS = -O3 -std=c++2a -w
 
 #Header include directories
-HEADERS = -I$(SRC_DIR)/gcflobdd -I$(SRC_DIR)/utils/
+HEADERS = -I$(SRC_DIR)/gcflobdd -I$(SRC_DIR)/utils/ -I$(SRC_DIR)/ops -I$(SRC_DIR)/grammar -I$(SRC_DIR)/hardware_benchmarks -I$(SRC_DIR)/visualization
 #Libraries for linking
-LIBS = -I/usr/include/graphviz -L/usr/lib -lgvc -lcgraph
+LIBS = -I/usr/include/graphviz -L/usr/lib -lgvc -lcgraph #-fsanitize=address,undefined -fno-omit-frame-pointer
 
 # Dependency options
 DEPENDENCY_OPTIONS = -MM

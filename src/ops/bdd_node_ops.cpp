@@ -27,18 +27,21 @@ namespace G_CFL_OBDD {
         G_CFLOBDDBDDNode* gcflobddNode = new G_CFLOBDDBDDNode(numVars);
 
         BDDInternalNode* internalNode = new BDDInternalNode(numVars - i, i);
-
-        internalNode->thenBranch = BDDNodeHandle(new BDDLeafNode(
+        
+        G_CFLOBDDReturnMapHandle m0; m0.AddToEnd(0); m0.Canonicalize();
+        G_CFLOBDDReturnMapHandle m1; m1.AddToEnd(1); m1.Canonicalize();
+        auto thenMapHandle = BDDNodeHandle(new BDDLeafNode(
             0, // Value
             -1, // varID
             0 // numVars
         ));
-
-        internalNode->elseBranch = BDDNodeHandle(new BDDLeafNode(
+        auto elseMapHandle = BDDNodeHandle(new BDDLeafNode(
             1, // Value
             -1, // varID
             0 // numVars
         ));
+        internalNode->thenBranch = Section(thenMapHandle, m0);
+        internalNode->elseBranch = Section(elseMapHandle, m1);
 
         BDDNodeHandle bddNodeHandle(internalNode);
 
